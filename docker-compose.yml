@@ -1,0 +1,23 @@
+# Local MongoDB for AI Pharmacy Assistant ONLY.
+# Do NOT point the app at any production pharmacy database.
+#
+# Host port 27018 avoids clashing with another MongoDB already bound to 27017.
+# Inside the container Mongo still listens on 27017.
+services:
+  mongo:
+    image: mongo:7
+    container_name: ai-pharmacy-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - ai_pharmacy_mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: ai_pharmacy_assistant
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ai_pharmacy_mongo_data:

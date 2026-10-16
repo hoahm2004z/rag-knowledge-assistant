@@ -1,0 +1,26 @@
+# Secrets & local env
+.env
+**/.env
+*.pem
+*.key
+
+# Build
+**/target/
+**/build/
+**/.gradle/
+**/out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# OS
+desktop.ini

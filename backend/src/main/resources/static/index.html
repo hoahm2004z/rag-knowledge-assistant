@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Pharmacy Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #10221c;
+      --ink-soft: #2a4038;
+      --muted: #5a6f67;
+      --line: rgba(16, 34, 28, 0.12);
+      --panel: rgba(247, 251, 249, 0.78);
+      --panel-solid: #f4faf7;
+      --user: #0d5c4d;
+      --user-hover: #0a4a3e;
+      --bot: #e8f1ed;
+      --accent: #1f8a70;
+      --danger: #a33b32;
+      --warn-bg: #fff6e8;
+      --radius: 20px;
+      --shadow: 0 18px 50px rgba(16, 34, 28, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 520px at 0% 0%, rgba(31, 138, 112, 0.22), transparent 60%),
+        radial-gradient(700px 420px at 100% 10%, rgba(45, 90, 120, 0.14), transparent 55%),
+        linear-gradient(165deg, #eef6f2 0%, #e3ebe7 42%, #d7e4df 100%);
+    }
+
+    .app {
+      width: min(1120px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 16px 20px;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .rail, .stage {
+      animation: rise 0.55s ease both;
+    }
+
+    .stage { animation-delay: 0.06s; }
+
+    .rail {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .brand-block {
+      padding: 4px 2px 8px;
+    }
+
+    .brand {
+      font-family: "Syne", sans-serif;
+      font-size: clamp(1.55rem, 3.2vw, 1.9rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin: 0;
+    }
+
+    .tagline {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status-line {
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+
+    .status-line strong { color: var(--ink); font-weight: 700; }
+
+    .note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--warn-bg);
+      border: 1px solid rgba(160, 110, 40, 0.22);
+      color: #6a4b1a;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .auth-form label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .auth-form input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    .auth-form input:focus {
+      border-color: rgba(13, 92, 77, 0.45);
+      box-shadow: 0 0 0 3px rgba(13, 92, 77, 0.12);
+    }
+
+    .auth-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .auth-meta {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      color: var(--ink-soft);
+    }
+
+    .auth-meta.signed { color: var(--user); font-weight: 600; }
+
+    .auth-error {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--danger);
+      display: none;
+    }
+
+    .auth-error.show { display: block; }
+
+    .hints {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hint {
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.65);
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+      line-height: 1.35;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .hint:hover {
+      background: #fff;
+      border-color: rgba(13, 92, 77, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .stage {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 44px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .stage-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .stage-title {
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .stage-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-primary {
+      padding: 10px 14px;
+      background: var(--user);
+      color: #f4fffb;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: var(--user-hover); }
+
+    .btn-ghost {
+      padding: 8px 12px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--ink);
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 80px),
+        var(--panel-solid);
+    }
+
+    .empty {
+      margin: auto;
+      max-width: 420px;
+      text-align: center;
+      padding: 28px 12px 40px;
+      animation: rise 0.5s ease both;
+    }
+
+    .empty h3 {
+      margin: 0 0 8px;
+      font-family: "Syne", sans-serif;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+    }
+
+    .empty p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .msg-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: min(88%, 640px);
+      animation: pop 0.28s ease both;
+    }
+
+    .msg-wrap.user { align-self: flex-end; align-items: flex-end; }
+    .msg-wrap.bot { align-self: flex-start; align-items: flex-start; }
+
+    .msg {
+      padding: 12px 14px;
+      border-radius: 16px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg.bot {
+      background: var(--bot);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-bottom-left-radius: 6px;
+    }
+
+    .msg.user {
+      background: var(--user);
+      color: #f4fffb;
+      border-bottom-right-radius: 6px;
+    }
+
+    .msg.error {
+      background: #f8ebe8;
+      color: var(--danger);
+      border: 1px solid rgba(163, 59, 50, 0.22);
+    }
+
+    .msg.typing {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--ink-soft);
+    }
+
+    .chip.db { border-color: rgba(45, 90, 120, 0.28); color: #234a63; }
+    .chip.rag { border-color: rgba(31, 138, 112, 0.3); color: #0d5c4d; }
+
+    .sources {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .source {
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.75);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .source .path {
+      font-weight: 700;
+      color: var(--ink);
+      word-break: break-all;
+    }
+
+    .source .excerpt {
+      margin-top: 4px;
+      color: var(--muted);
+    }
+
+    .composer {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .composer textarea {
+      flex: 1;
+      resize: none;
+      min-height: 48px;
+      max-height: 140px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+
+    .composer textarea:focus {
+      border-color: rgba(13, 92, 77, 0.45);
+      box-shadow: 0 0 0 3px rgba(13, 92, 77, 0.12);
+    }
+
+    .send {
+      padding: 0 18px;
+      background: var(--user);
+      color: #f4fffb;
+      min-width: 84px;
+    }
+
+    .send:hover:not(:disabled) { background: var(--user-hover); }
+
+    .mobile-brand {
+      display: none;
+      margin-bottom: 4px;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 14px 12px 12px;
+        gap: 12px;
+      }
+
+      .mobile-brand { display: block; }
+
+      .rail {
+        order: 2;
+      }
+
+      .stage {
+        order: 1;
+        min-height: 62vh;
+      }
+
+      .brand-block .brand { font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="rail">
+      <div class="brand-block">
+        <h1 class="brand">AI Pharmacy Assistant</h1>
+        <p class="tagline">Trợ lý demo: tra cứu sản phẩm seed, chính sách tài liệu và hồ sơ sau khi đăng nhập local.</p>
+      </div>
+
+      <section class="panel" aria-label="Trạng thái hệ thống">
+        <h2>Hệ thống</h2>
+        <p class="status-line" id="ragStatus">Đang kiểm tra kho tài liệu…</p>
+        <p class="status-line" id="sessionStatus"></p>
+        <p class="note">Dữ liệu giá/tồn kho và đơn hàng là seed local — không phải hệ thống bán hàng production. Tài liệu demo không thay thế tư vấn dược sĩ.</p>
+      </section>
+
+      <section class="panel" aria-label="Đăng nhập">
+        <h2>Đăng nhập local</h2>
+        <form class="auth-form" id="loginForm">
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" placeholder="alice_demo" />
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Demo password" />
+          <div class="auth-actions">
+            <button type="submit" class="btn-primary" id="loginBtn">Đăng nhập</button>
+            <button type="button" class="btn-ghost" id="logoutBtn" hidden>Đăng xuất</button>
+          </div>
+        </form>
+        <p class="auth-meta" id="authMeta">Chưa đăng nhập — chỉ dùng được câu hỏi công khai.</p>
+        <p class="auth-error" id="authError"></p>
+      </section>
+
+      <section class="panel" aria-label="Gợi ý câu hỏi">
+        <h2>Gợi ý</h2>
+        <div class="hints" id="hints">
+          <button type="button" class="hint" data-q="Xin chào, bạn có thể hỗ trợ những gì?">SELF · Chào hỏi &amp; giới thiệu</button>
+          <button type="button" class="hint" data-q="Giá và tồn kho của Biragan hiện tại là bao nhiêu?">DB · Giá / tồn kho Biragan</button>
+          <button type="button" class="hint" data-q="Tóm tắt chính sách đổi trả: trường hợp được chấp nhận, điều kiện và các bước khách cần làm.">RAG · Chính sách đổi trả</button>
+          <button type="button" class="hint" data-q="Biragan còn hàng không và nếu mua thì điều kiện đổi trả áp dụng thế nào?">DB+RAG · Tồn kho + đổi trả</button>
+          <button type="button" class="hint" data-q="Cho tôi xem hồ sơ và đơn hàng gần đây của tôi.">Auth · Hồ sơ / đơn hàng</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="stage" aria-label="Hội thoại">
+      <div class="mobile-brand brand-block">
+        <h1 class="brand">AI Pharmacy Assistant</h1>
+      </div>
+      <div class="stage-bar">
+        <div>
+          <div class="stage-title">Hội thoại</div>
+          <div class="stage-sub" id="composerHint">Hỏi sản phẩm, chính sách demo hoặc đăng nhập để xem dữ liệu cá nhân seed.</div>
+        </div>
+        <button type="button" class="btn-ghost" id="clearBtn">Xóa lịch sử</button>
+      </div>
+
+      <div class="messages" id="messages" role="log" aria-live="polite">
+        <div class="empty" id="emptyState">
+          <h3>Bắt đầu cuộc hội thoại</h3>
+          <p>Chọn một gợi ý bên trái, hoặc nhập câu hỏi về sản phẩm seed, chính sách tài liệu demo, hoặc thông tin cá nhân sau khi đăng nhập.</p>
+        </div>
+      </div>
+
+      <form class="composer" id="form">
+        <textarea id="input" rows="1" placeholder="Nhập câu hỏi…" autofocus></textarea>
+        <button class="send" type="submit" id="sendBtn">Gửi</button>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById("messages");
+    const emptyState = document.getElementById("emptyState");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const ragStatus = document.getElementById("ragStatus");
+    const sessionStatus = document.getElementById("sessionStatus");
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const authMeta = document.getElementById("authMeta");
+    const authError = document.getElementById("authError");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    const SESSION_KEY = "ai-pharmacy-session";
+    const TOKEN_KEY = "ai-pharmacy-token";
+    const USER_KEY = "ai-pharmacy-user";
+
+    let sessionId = localStorage.getItem(SESSION_KEY);
+    if (!sessionId) {
+      sessionId = "web-" + crypto.randomUUID();
+      localStorage.setItem(SESSION_KEY, sessionId);
+    }
+
+    let authToken = localStorage.getItem(TOKEN_KEY) || "";
+    let authUser = localStorage.getItem(USER_KEY) || "";
+
+    function hideEmpty() {
+      if (emptyState) emptyState.hidden = true;
+    }
+
+    function showEmptyIfNeeded() {
+      const hasMsg = messagesEl.querySelector(".msg-wrap");
+      if (!hasMsg && emptyState) emptyState.hidden = false;
+    }
+
+    function renderAuth() {
+      authError.classList.remove("show");
+      authError.textContent = "";
+      if (authToken && authUser) {
+        authMeta.textContent = "Đã đăng nhập: " + authUser;
+        authMeta.classList.add("signed");
+        logoutBtn.hidden = false;
+        loginBtn.hidden = true;
+        usernameInput.disabled = true;
+        passwordInput.disabled = true;
+      } else {
+        authMeta.textContent = "Chưa đăng nhập — chỉ dùng được câu hỏi công khai.";
+        authMeta.classList.remove("signed");
+        logoutBtn.hidden = true;
+        loginBtn.hidden = false;
+        usernameInput.disabled = false;
+        passwordInput.disabled = false;
+      }
+      sessionStatus.textContent = "Session " + sessionId.slice(0, 8) + "…";
+    }
+
+    function addMessage(text, type, meta) {
+      hideEmpty();
+      const wrap = document.createElement("div");
+      wrap.className = "msg-wrap " + (type === "user" ? "user" : "bot");
+
+      const el = document.createElement("div");
+      el.className = "msg " + type;
+      el.textContent = text;
+      wrap.appendChild(el);
+
+      if (meta && (meta.toolsUsed?.length || meta.sources?.length)) {
+        const metaRow = document.createElement("div");
+        metaRow.className = "meta-row";
+        (meta.toolsUsed || []).forEach((name) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = "Tool · " + name;
+          metaRow.appendChild(chip);
+        });
+        const types = new Set((meta.sources || []).map((s) => s.sourceType).filter(Boolean));
+        types.forEach((t) => {
+          const chip = document.createElement("span");
+          chip.className = "chip " + String(t).toLowerCase();
+          chip.textContent = t === "DB" ? "Nguồn · Database seed" : "Nguồn · Tài liệu RAG";
+          metaRow.appendChild(chip);
+        });
+        wrap.appendChild(metaRow);
+
+        const ragSources = (meta.sources || []).filter((s) => s.sourceType === "RAG" && (s.documentPath || s.excerpt));
+        if (ragSources.length) {
+          const box = document.createElement("div");
+          box.className = "sources";
+          ragSources.forEach((s) => {
+            const item = document.createElement("div");
+            item.className = "source";
+            const path = document.createElement("div");
+            path.className = "path";
+            path.textContent = s.documentPath || s.title || "Tài liệu RAG";
+            item.appendChild(path);
+            if (s.excerpt) {
+              const ex = document.createElement("div");
+              ex.className = "excerpt";
+              ex.textContent = s.excerpt;
+              item.appendChild(ex);
+            }
+            box.appendChild(item);
+          });
+          wrap.appendChild(box);
+        }
+      }
+
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return { wrap, el };
+    }
+
+    function authHeaders() {
+      const headers = { "X-Session-Id": sessionId };
+      if (authToken) headers["Authorization"] = "Bearer " + authToken;
+      return headers;
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch("/api/rag/status");
+        const json = await res.json();
+        const n = json?.data?.chunkCount ?? 0;
+        const withEmb = json?.data?.chunksWithEmbedding;
+        const ret = json?.data?.returnPolicyChunks;
+        let text = "<strong>" + n + "</strong> đoạn tài liệu đã nạp";
+        if (typeof withEmb === "number") text += " · " + withEmb + " có embedding";
+        if (typeof ret === "number") text += " · đổi trả: " + ret;
+        ragStatus.innerHTML = text;
+        if (n === 0) {
+          ragStatus.innerHTML += "<br/>Chưa có corpus — cần ingest (admin) trước khi hỏi chính sách.";
+        }
+      } catch {
+        ragStatus.textContent = "Không đọc được trạng thái RAG. Kiểm tra backend và MongoDB.";
+      }
+    }
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      authError.classList.remove("show");
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+      if (!username || !password) {
+        authError.textContent = "Nhập username và password demo.";
+        authError.classList.add("show");
+        return;
+      }
+      loginBtn.disabled = true;
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success || !json.data?.token) {
+          authError.textContent = json.message || "Đăng nhập thất bại.";
+          authError.classList.add("show");
+          return;
+        }
+        authToken = json.data.token;
+        authUser = json.data.username || username;
+        localStorage.setItem(TOKEN_KEY, authToken);
+        localStorage.setItem(USER_KEY, authUser);
+        passwordInput.value = "";
+        renderAuth();
+        addMessage("Đã đăng nhập với tài khoản " + authUser + ". Bạn có thể hỏi hồ sơ, giỏ hàng hoặc đơn hàng seed của chính mình.", "bot");
+      } catch {
+        authError.textContent = "Không kết nối được máy chủ đăng nhập.";
+        authError.classList.add("show");
+      } finally {
+        loginBtn.disabled = false;
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      logoutBtn.disabled = true;
+      try {
+        if (authToken) {
+          await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + authToken }
+          });
+        }
+      } catch {
+        /* still clear local session */
+      } finally {
+        authToken = "";
+        authUser = "";
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        renderAuth();
+        addMessage("Đã đăng xuất. Các câu hỏi cá nhân sẽ yêu cầu đăng nhập lại.", "bot");
+        logoutBtn.disabled = false;
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage(message, "user");
+      input.value = "";
+      autoResize();
+      sendBtn.disabled = true;
+      const typing = addMessage("Đang xử lý…", "bot typing");
+
+      try {
+        const res = await fetch("/api/chat?message=" + encodeURIComponent(message), {
+          method: "POST",
+          headers: authHeaders()
+        });
+        const json = await res.json().catch(() => null);
+        typing.wrap.remove();
+        if (!res.ok || !json?.success) {
+          const errText = json?.message || (res.status === 401
+            ? "Phiên đăng nhập không hợp lệ. Hãy đăng nhập lại."
+            : "Có lỗi xảy ra.");
+          addMessage(errText, "error");
+        } else {
+          addMessage(json.data?.text || "(Không có nội dung)", "bot", {
+            toolsUsed: json.data?.toolsUsed || [],
+            sources: json.data?.sources || []
+          });
+        }
+      } catch {
+        typing.wrap.remove();
+        addMessage("Không kết nối được máy chủ. Kiểm tra backend đang chạy.", "error");
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+
+    clearBtn.addEventListener("click", async () => {
+      clearBtn.disabled = true;
+      try {
+        const res = await fetch("/api/chat/history", {
+          method: "DELETE",
+          headers: authHeaders()
+        });
+        if (!res.ok) throw new Error("clear failed");
+        messagesEl.replaceChildren();
+        emptyState.hidden = false;
+        messagesEl.appendChild(emptyState);
+        addMessage("Đã xóa lịch sử hội thoại trên phiên này. Bạn có thể hỏi câu mới.", "bot");
+      } catch {
+        addMessage("Không xóa được lịch sử. Thử lại khi backend sẵn sàng.", "error");
+      } finally {
+        clearBtn.disabled = false;
+      }
+    });
+
+    document.getElementById("hints").addEventListener("click", (e) => {
+      const btn = e.target.closest(".hint");
+      if (!btn) return;
+      input.value = btn.getAttribute("data-q") || "";
+      autoResize();
+      input.focus();
+    });
+
+    function autoResize() {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    }
+    input.addEventListener("input", autoResize);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    renderAuth();
+    loadStatus();
+  </script>
+</body>
+</html>
